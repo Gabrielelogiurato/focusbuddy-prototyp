@@ -1,0 +1,577 @@
+<title>FocusBuddy Prototyp</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@200;300&display=swap">
+
+<style>
+:root{
+  --ground:#E9EDF1; --surface:#FFFFFF; --raised:#F4F6F9; --sunk:#ECEFF3;
+  --ink:#101922; --muted:#59676F; --faint:#8B98A2; --line:#E0E5EA;
+  --accent:#27457F; --accent-ink:#27457F; --accent-soft:#E6EDF9;
+  --go:#1B7A4D; --go-soft:#E1F0E8;
+  --warn-ink:#8A5A12; --warn-soft:#FBF2DC;
+  --stop-ink:#A33A2E; --stop-soft:#FBEBE8;
+  --on-accent:#FFFFFF;
+  --chrome:#F7F9FB;
+  --shadow:0 24px 64px -28px rgba(16,25,34,.5), 0 2px 6px -2px rgba(16,25,34,.12);
+  --r:14px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0A0E13; --surface:#151B22; --raised:#1C242C; --sunk:#121920;
+    --ink:#E8EDF2; --muted:#9BA8B3; --faint:#74818C; --line:#28313A;
+    --accent:#8FADEB; --accent-ink:#B8CBF5; --accent-soft:#1C2740;
+    --go:#53BA87; --go-soft:#142E22;
+    --warn-ink:#D6B76A; --warn-soft:#2A2415;
+    --stop-ink:#E79084; --stop-soft:#2E1B18;
+    --on-accent:#0A0E13;
+    --chrome:#111820;
+    --shadow:0 24px 64px -28px rgba(0,0,0,.8);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0A0E13; --surface:#151B22; --raised:#1C242C; --sunk:#121920;
+  --ink:#E8EDF2; --muted:#9BA8B3; --faint:#74818C; --line:#28313A;
+  --accent:#8FADEB; --accent-ink:#B8CBF5; --accent-soft:#1C2740;
+  --go:#53BA87; --go-soft:#142E22;
+  --warn-ink:#D6B76A; --warn-soft:#2A2415;
+  --stop-ink:#E79084; --stop-soft:#2E1B18;
+  --on-accent:#0A0E13;
+  --chrome:#111820;
+  --shadow:0 24px 64px -28px rgba(0,0,0,.8);
+}
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{
+  background:var(--ground); color:var(--ink);
+  font-family:"Instrument Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  min-height:100vh; min-height:100dvh;
+  display:flex; align-items:center; justify-content:center; padding:24px 16px;
+}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+
+/* ---------- Geraet ---------- */
+.phone{
+  width:392px; height:812px; max-height:calc(100dvh - 48px);
+  background:var(--surface); border:1px solid var(--line);
+  border-radius:40px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; overflow:hidden; position:relative;
+}
+.statusbar{
+  height:44px; flex:none; display:flex; align-items:center; justify-content:space-between;
+  padding:0 26px 0 30px; background:var(--chrome); font-size:14px; font-weight:600;
+  letter-spacing:.01em; color:var(--ink);
+}
+.sbr{display:flex;align-items:center;gap:6px}
+.bars{display:flex;align-items:flex-end;gap:2px;height:11px}
+.bars i{width:3px;background:var(--ink);border-radius:1px}
+.bars i:nth-child(1){height:4px}.bars i:nth-child(2){height:6px}
+.bars i:nth-child(3){height:9px}.bars i:nth-child(4){height:11px}
+.wifi{width:14px;height:11px;border:2px solid var(--ink);border-bottom:none;
+  border-radius:14px 14px 0 0;opacity:.95}
+.batt{width:24px;height:12px;border:1.5px solid var(--ink);border-radius:4px;padding:1.5px;position:relative;opacity:.9}
+.batt::after{content:"";position:absolute;right:-3px;top:3.5px;width:2px;height:5px;background:var(--ink);border-radius:0 2px 2px 0}
+.batt i{display:block;height:100%;width:72%;background:var(--ink);border-radius:2px}
+
+.viewport{position:relative;flex:1;overflow:hidden}
+.homebar{height:26px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--surface)}
+.homebar i{width:132px;height:5px;border-radius:3px;background:var(--ink);opacity:.22}
+
+/* ---------- Screens ---------- */
+.screen{
+  position:absolute; inset:0; display:flex; flex-direction:column;
+  background:var(--surface); visibility:hidden;
+  transform:translateX(100%); transition:transform .3s cubic-bezier(.32,.72,0,1), visibility .3s;
+}
+.screen.on{visibility:visible;transform:none}
+.screen.behind{visibility:visible;transform:translateX(-24%)}
+.body{flex:1;overflow-y:auto;padding:22px 24px 8px;-webkit-overflow-scrolling:touch}
+.foot{flex:none;padding:10px 24px 20px;background:var(--surface)}
+@media (prefers-reduced-motion:reduce){.screen{transition:none}}
+
+.kick{font-size:11.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--accent-ink)}
+.kick.go{color:var(--go)}
+h1{font-size:28px;line-height:1.16;font-weight:600;letter-spacing:-.022em;margin-top:8px;text-wrap:balance}
+.lede{font-size:15px;line-height:1.5;color:var(--muted)}
+.lab{font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:9px}
+.sp{height:22px}.sp-s{height:12px}.sp-l{height:30px}
+
+.field{
+  width:100%;font:inherit;font-size:16px;color:var(--ink);
+  background:var(--raised);border:1.5px solid transparent;border-radius:var(--r);padding:15px 16px;
+}
+.field::placeholder{color:var(--faint)}
+.field:focus{outline:none;border-color:var(--accent);background:var(--surface)}
+textarea.field{resize:none;line-height:1.45}
+
+.opt{
+  width:100%;display:flex;align-items:center;gap:12px;
+  background:var(--raised);border:1.5px solid transparent;border-radius:var(--r);
+  padding:15px 16px;font-size:15.5px;line-height:1.3;color:var(--ink);
+  transition:background .15s,border-color .15s,transform .09s;
+}
+.opt:active{transform:scale(.985)}
+.opt[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.opt .t{flex:1}
+.opt .tag{display:block;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink);margin-bottom:3px}
+.opt .mins{font-size:13.5px;color:var(--muted);white-space:nowrap;font-variant-numeric:tabular-nums}
+.opt[aria-pressed="true"] .mins{color:var(--accent-ink);font-weight:600}
+.tick{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--line);flex:none;position:relative}
+.opt[aria-pressed="true"] .tick{background:var(--accent);border-color:var(--accent)}
+.opt[aria-pressed="true"] .tick::after{content:"";position:absolute;left:6px;top:2.5px;width:5px;height:10px;
+  border:solid var(--on-accent);border-width:0 2px 2px 0;transform:rotate(43deg)}
+.stack{display:flex;flex-direction:column;gap:10px}
+
+.chips{display:flex;gap:9px}
+.chip{flex:1;text-align:center;background:var(--raised);border:1.5px solid transparent;border-radius:var(--r);
+  padding:13px 4px;font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;transition:all .15s}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:600}
+
+.note{background:var(--warn-soft);color:var(--warn-ink);border-radius:var(--r);padding:13px 16px;font-size:14px;line-height:1.45}
+.pill{border-radius:var(--r);padding:14px 16px;font-size:15px;line-height:1.35;display:flex;align-items:center;gap:10px}
+.pill.ok{background:var(--go-soft);color:var(--go);font-weight:600}
+.pill.neutral{background:var(--raised);color:var(--muted)}
+.pill .dot{width:8px;height:8px;border-radius:50%;background:currentColor;flex:none;opacity:.85}
+.ctx{display:inline-block;background:var(--accent-soft);color:var(--accent-ink);border-radius:99px;
+  padding:7px 14px;font-size:13px;font-weight:500}
+
+.btn{display:block;width:100%;text-align:center;background:var(--accent);color:var(--on-accent);
+  border-radius:var(--r);padding:17px;font-size:17px;font-weight:600;transition:transform .09s,filter .15s}
+.btn:active{transform:scale(.985)}
+.btn:hover{filter:brightness(1.07)}
+.btn.quiet{background:var(--raised);color:var(--ink)}
+.btn.line{background:transparent;border:1.5px solid var(--line);color:var(--ink)}
+.btn.danger{background:var(--stop-soft);color:var(--stop-ink)}
+.txtbtn{display:block;width:100%;text-align:center;padding:14px;font-size:15px;color:var(--accent-ink);font-weight:500}
+.txtbtn.sub{color:var(--muted);font-weight:400}
+.back{display:flex;align-items:center;gap:7px;font-size:15px;color:var(--muted);padding:2px 0;margin-bottom:14px}
+.back .ar{width:9px;height:9px;border:solid var(--muted);border-width:0 0 1.8px 1.8px;transform:rotate(45deg)}
+
+.bar{height:6px;border-radius:99px;background:var(--sunk);overflow:hidden}
+.bar i{display:block;height:100%;background:var(--go);border-radius:99px;transition:width 1s linear}
+.clock{font-family:"IBM Plex Mono",ui-monospace,monospace;font-weight:200;font-size:66px;
+  letter-spacing:-.03em;font-variant-numeric:tabular-nums;line-height:1;color:var(--ink)}
+
+.wkhead{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:9px}
+.wkhead .lab{margin-bottom:0}
+.wktot{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.week{display:flex;gap:10px;align-items:flex-end;height:78px}
+.week i{flex:1;background:var(--go-soft);border-radius:7px;transition:height .5s ease-out}
+.week i.today{background:var(--go)}
+.weekl{display:flex;gap:10px;margin-top:8px}
+.weekl span{flex:1;text-align:center;font-size:11.5px;color:var(--faint)}
+.weekm{display:flex;gap:10px;margin-top:3px}
+.weekm span{flex:1;text-align:center;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.weekm span.now{color:var(--go);font-weight:700}
+.weekl span.now{color:var(--go);font-weight:600}
+.opt[data-done]{opacity:.55}
+.opt[data-done] .tick{background:var(--go);border-color:var(--go)}
+.opt[data-done] .tick::after{content:"";position:absolute;left:6px;top:2.5px;width:5px;height:10px;
+  border:solid var(--surface);border-width:0 2px 2px 0;transform:rotate(43deg)}
+.tag.done{color:var(--go)}
+
+.sheet{position:absolute;inset:0;display:flex;align-items:flex-end;pointer-events:none;
+  background:rgba(8,13,18,0);transition:background .22s}
+.sheet.on{pointer-events:auto;background:rgba(8,13,18,.5)}
+.card{width:100%;background:var(--surface);border-radius:24px 24px 0 0;padding:26px 24px 22px;
+  transform:translateY(100%);transition:transform .28s cubic-bezier(.32,.72,0,1)}
+.sheet.on .card{transform:none}
+.card h2{font-size:20px;font-weight:600;line-height:1.3;text-wrap:balance}
+.card .lede{margin-top:9px}
+.card .btn{margin-top:16px}
+.card .btn + .btn{margin-top:9px}
+
+/* ---------- Moderation ---------- */
+.mod{position:fixed;right:14px;bottom:14px;width:34px;height:34px;border-radius:50%;
+  background:var(--surface);border:1px solid var(--line);color:var(--faint);
+  display:flex;align-items:center;justify-content:center;font-size:14px;opacity:.55;z-index:30}
+.mod:hover{opacity:1}
+.panel{position:fixed;right:14px;bottom:58px;width:300px;background:var(--surface);
+  border:1px solid var(--line);border-radius:16px;padding:18px;display:none;z-index:30;
+  box-shadow:0 16px 40px -18px rgba(16,25,34,.45)}
+.panel.on{display:block}
+.panel h3{font-size:11px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--faint);margin-bottom:10px}
+.panel p{font-size:13.5px;line-height:1.5;color:var(--muted);margin-bottom:9px}
+.panel b{color:var(--ink)}
+.metric{background:var(--raised);border-radius:10px;padding:11px 13px;margin-bottom:12px}
+.metric .n{font-family:"IBM Plex Mono",monospace;font-size:24px;color:var(--ink);font-variant-numeric:tabular-nums}
+.panel .btn{padding:12px;font-size:14px;margin-top:4px}
+
+@media (max-width:520px){
+  body{padding:0}
+  .phone{width:100%;height:100dvh;max-height:none;border:none;border-radius:0;box-shadow:none}
+  .statusbar{padding-top:env(safe-area-inset-top)}
+  .homebar{padding-bottom:env(safe-area-inset-bottom)}
+  .panel{right:8px;left:8px;width:auto;bottom:54px}
+}
+</style>
+
+<div class="phone">
+  <div class="statusbar">
+    <span id="sbTime">19:41</span>
+    <span class="sbr">
+      <span class="bars"><i></i><i></i><i></i><i></i></span>
+      <span class="wifi"></span>
+      <span class="batt"><i></i></span>
+    </span>
+  </div>
+
+  <div class="viewport">
+
+    <section class="screen on" id="s1">
+      <div class="body">
+        <p class="kick">Mittwoch Abend</p>
+        <h1>Womit f&#228;ngst du an?</h1>
+        <div class="sp"></div>
+        <p class="lab">Deine Aufgabe</p>
+        <input class="field" id="task" value="Statistik Kapitel 4" aria-label="Deine Aufgabe">
+        <div class="sp"></div>
+        <p class="lab">In kleine Schritte zerlegt</p>
+        <div class="stack" id="opts"></div>
+        <button class="txtbtn" id="toOwn">Eigenen Schritt eingeben</button>
+        <p class="note">Die Dauer geh&#246;rt zum Schritt. Du musst nichts einstellen.</p>
+        <div class="sp"></div>
+      </div>
+      <div class="foot"><button class="btn" id="go1">Los</button></div>
+    </section>
+
+    <section class="screen" id="s2">
+      <div class="body">
+        <button class="back" id="back1"><span class="ar"></span>Vorschl&#228;ge</button>
+        <p class="kick">Eigener Schritt</p>
+        <h1>Was machst du jetzt?</h1>
+        <div class="sp"></div>
+        <p class="lab">Ein Schritt, nicht die ganze Aufgabe</p>
+        <textarea class="field" id="own" rows="3" placeholder="z. B. &#220;bungsblatt 3, Aufgabe 1 bis 4" aria-label="Dein Schritt"></textarea>
+        <div class="sp"></div>
+        <p class="lab">Wie lange</p>
+        <div class="chips" id="mins">
+          <button class="chip" aria-pressed="false" data-m="15">15</button>
+          <button class="chip" aria-pressed="true" data-m="20">20</button>
+          <button class="chip" aria-pressed="false" data-m="25">25</button>
+          <button class="chip" aria-pressed="false" data-m="45">45</button>
+        </div>
+        <div class="sp-s"></div>
+        <p class="lede">Minuten. K&#252;rzer ist fast immer besser.</p>
+        <div class="sp"></div>
+        <p class="lede">Der Schritt landet in deiner Liste. Starten kannst du ihn gleich danach.</p>
+      </div>
+      <div class="foot"><button class="btn" id="go2">Schritt hinzuf&#252;gen</button></div>
+    </section>
+
+    <section class="screen" id="s3">
+      <div class="body">
+        <p class="kick go" id="fStep">Schritt 1 von 3</p>
+        <h1 id="fTitle">Zusammenfassung S. 40 bis 46 lesen</h1>
+        <div class="sp-s"></div>
+        <span class="ctx" id="fCtx">aus: Statistik Kapitel 4</span>
+        <div class="sp-l"></div>
+        <div class="bar"><i id="fBar" style="width:2%"></i></div>
+        <div class="sp"></div>
+        <p class="clock" id="fClock">19:58</p>
+        <div class="sp-s"></div>
+        <p class="lede" id="fLeft">Noch 20 Minuten f&#252;r diesen Schritt.</p>
+        <div class="sp-l"></div>
+        <div id="fNextWrap">
+          <p class="lab">Danach</p>
+          <div class="pill neutral" id="fNext"><span class="dot"></span>Schritt 2 &#183; Altpr&#252;fung Aufgabe 1 bis 3</div>
+          <div class="sp"></div>
+        </div>
+        <p class="lede" id="fHint">Du musst heute nicht alles schaffen. Ein Schritt reicht.</p>
+        <div class="sp"></div>
+      </div>
+      <div class="foot">
+        <button class="btn quiet" id="done">Schritt erledigt</button>
+        <button class="txtbtn sub" id="quit">Session beenden</button>
+      </div>
+    </section>
+
+    <section class="screen" id="s4">
+      <div class="body">
+        <p class="kick go" id="eKick">Schritt geschafft</p>
+        <h1 id="eTitle">20 Minuten geschafft.</h1>
+        <div class="sp-s"></div>
+        <p class="lede" id="eStep">Zusammenfassung S. 40 bis 46 lesen</p>
+        <div class="sp"></div>
+        <div class="pill ok" id="eP1"><span class="dot"></span>Schritt 1 von 3 erledigt</div>
+        <div class="sp-s"></div>
+        <div class="pill neutral" id="eP2"><span class="dot"></span>Noch 2 Schritte offen</div>
+        <div class="sp-l"></div>
+        <div class="wkhead"><p class="lab">Diese Woche</p><span class="wktot" id="eTot">3 h 05</span></div>
+        <div class="week" id="eWeekBars">
+          <i style="height:40%"></i><i style="height:63%"></i><i style="height:23%"></i>
+          <i style="height:80%"></i><i class="today" id="eBar" style="height:14%"></i>
+        </div>
+        <div class="weekl"><span>Mo</span><span>Di</span><span>Mi</span><span>Do</span><span class="now">Heute</span></div>
+        <div class="weekm" id="eWeekMins"><span>35</span><span>55</span><span>20</span><span>70</span><span class="now">0</span></div>
+        <div class="sp-s"></div>
+        <p class="lede" id="eWeek">Vier von sieben Tagen mit mindestens einem erledigten Schritt.</p>
+        <div class="sp"></div>
+      </div>
+      <div class="foot">
+        <button class="btn" id="next">Schritt 2 starten &#183; 25 Min</button>
+        <button class="txtbtn sub" id="stop">F&#252;r heute fertig</button>
+      </div>
+    </section>
+
+    <section class="screen" id="s5">
+      <div class="body" style="justify-content:center;display:flex;flex-direction:column">
+        <p class="kick go">F&#252;r heute fertig</p>
+        <h1>Bis morgen.</h1>
+        <div class="sp"></div>
+        <p class="lede">Dein n&#228;chster Schritt steht schon bereit:<br>Altpr&#252;fung Aufgabe 1 bis 3, 25 Minuten.</p>
+      </div>
+      <div class="foot"><button class="btn line" id="again">Von vorne</button></div>
+    </section>
+
+    <div class="sheet" id="sheet">
+      <div class="card">
+        <h2>Schritt 1 von 3 ist noch nicht fertig. Trotzdem aufh&#246;ren?</h2>
+        <p class="lede">Noch <span id="sMin">13</span> Minuten bis zum Ende. Angefangenes z&#228;hlt auch.</p>
+        <button class="btn" id="keep">Weitermachen</button>
+        <button class="btn danger" id="leave">Aufh&#246;ren</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="homebar"><i></i></div>
+</div>
+
+<button class="mod" id="modBtn" title="Moderation" aria-label="Moderationspanel">&#9679;</button>
+<div class="panel" id="panel">
+  <h3>Moderation</h3>
+  <div class="metric">
+    <div class="n" id="mSec">&#8211;</div>
+    <p style="margin:2px 0 0">Sekunden vom Start bis &#8222;Los&#8220;</p>
+  </div>
+  <p><b>Weg:</b> <span id="mPath">&#8211;</span></p>
+  <p><b>Gew&#228;hlter Schritt:</b> <span id="mStep">&#8211;</span></p>
+  <p style="margin-top:12px"><b>Aufgabe 1</b><br>Du hast gleich Statistik zu lernen und willst endlich anfangen. Zeig uns, wie du mit dieser App startest.</p>
+  <p><b>Aufgabe 2</b><br>Du bist mitten in der Session, das Handy vibriert und du hast keine Lust mehr. Zeig uns, was du jetzt tust.</p>
+  <button class="btn quiet" id="reset">Zur&#252;cksetzen f&#252;r n&#228;chste Person</button>
+</div>
+
+<script>
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var ORIG=[
+    {t:"Zusammenfassung S. 40 bis 46 lesen", m:20},
+    {t:"Altpr\u00fcfung Aufgabe 1 bis 3 rechnen", m:25},
+    {t:"Karteikarten Kapitel 4 durchgehen", m:15}
+  ];
+  var DEFTASK="Statistik Kapitel 4";
+  var WEEK=[35,55,20,70];                 // Mo bis Do, Minuten
+  var STEPS, done, idx, task, todayMin, total, left, timer, t0, cur, nextAction, ownMins;
+
+  function initState(){
+    STEPS=ORIG.map(function(o){return {t:o.t,m:o.m,custom:false}});
+    done=[false,false,false]; idx=0; task=DEFTASK; todayMin=0;
+    total=0; left=0; timer=null; nextAction=null; ownMins=20;
+  }
+
+  function esc(t){return String(t).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}
+  function mmss(s){var m=Math.floor(s/60),r=s%60;return m+":"+(r<10?"0":"")+r}
+  function minWord(n){return n===1?"eine Minute":n+" Minuten"}
+  function cap(t){return t.charAt(0).toUpperCase()+t.slice(1)}
+  function stepWord(n){return n===1?"1 Schritt":n+" Schritte"}
+  function hhmm(m){var h=Math.floor(m/60),r=m%60;return h>0?(h+" h "+(r<10?"0":"")+r):(m+" Min")}
+  function openCount(){var c=0;for(var i=0;i<done.length;i++){if(!done[i])c++}return c}
+  function firstOpen(){for(var i=0;i<done.length;i++){if(!done[i])return i}return -1}
+  function nextOpen(from){
+    for(var i=from+1;i<done.length;i++){if(!done[i])return i}
+    for(var j=0;j<from;j++){if(!done[j])return j}
+    return -1;
+  }
+
+  function renderOpts(){
+    var fo=firstOpen(), h="";
+    for(var i=0;i<STEPS.length;i++){
+      var st=STEPS[i], tag="";
+      if(done[i]) tag='<span class="tag done">Erledigt</span>';
+      else if(i===fo) tag='<span class="tag">Empfohlener Start</span>';
+      h+='<button class="opt" aria-pressed="'+(i===idx?"true":"false")+'" data-i="'+i+'"'
+       + (done[i]?' data-done="1"':'') + '>'
+       + '<span class="tick"></span><span class="t">'+tag+esc(st.t)+'</span>'
+       + '<span class="mins">'+st.m+' Min</span></button>';
+    }
+    $("opts").innerHTML=h;
+    var bs=$("opts").querySelectorAll(".opt");
+    Array.prototype.forEach.call(bs,function(b){
+      b.addEventListener("click",function(){
+        idx=parseInt(b.getAttribute("data-i"),10);
+        Array.prototype.forEach.call(bs,function(o){o.setAttribute("aria-pressed","false")});
+        b.setAttribute("aria-pressed","true");
+      });
+    });
+  }
+
+  function renderWeek(){
+    var vals=WEEK.concat([todayMin]);
+    var max=Math.max.apply(null,vals.concat([60]));
+    var bars=$("eWeekBars").children, mins=$("eWeekMins").children;
+    for(var i=0;i<5;i++){
+      bars[i].style.height=Math.max(6,Math.round(vals[i]/max*100))+"%";
+      mins[i].textContent=vals[i];
+    }
+    var tot=0; for(var j=0;j<vals.length;j++){tot+=vals[j]}
+    $("eTot").textContent=hhmm(tot);
+  }
+
+  function show(id,back){
+    if(id===cur)return;
+    var from=$(cur),to=$(id);
+    from.classList.remove("on");
+    if(!back){from.classList.add("behind")}
+    to.classList.remove("behind");
+    void to.offsetWidth;
+    to.classList.add("on");
+    setTimeout(function(){if(from!==to){from.classList.remove("behind")}},330);
+    to.querySelector(".body").scrollTop=0;
+    cur=id;
+  }
+
+  function stopTimer(){if(timer){clearInterval(timer);timer=null}}
+  function tick(){
+    if(left<=1){left=0;$("fClock").textContent="0:00";$("fBar").style.width="100%";stopTimer();finish(true);return}
+    left--;
+    $("fClock").textContent=mmss(left);
+    $("fBar").style.width=Math.max(2,Math.round((total-left)/total*100))+"%";
+    var m=Math.max(1,Math.ceil(left/60));
+    $("fLeft").textContent="Noch "+minWord(m)+" f\u00fcr diesen Schritt.";
+    $("sMin").textContent=m;
+  }
+
+  function startFocus(measure,resumeSecs){
+    var st=STEPS[idx];
+    if(measure){
+      $("mSec").textContent=Math.round((Date.now()-t0)/1000);
+      $("mPath").textContent=st.custom?"Eigener Schritt":"Vorschlag der App";
+      $("mStep").textContent=st.t+" ("+st.m+" Min)";
+    }
+    $("fStep").textContent="Schritt "+(idx+1)+" von "+STEPS.length;
+    $("fTitle").textContent=st.t;
+    $("fCtx").textContent="aus: "+(task.trim()||"deiner Aufgabe");
+    total=st.m*60;
+    left=resumeSecs?Math.min(resumeSecs,total):total-2;
+    $("fClock").textContent=mmss(left);
+    $("fBar").style.width=Math.max(2,Math.round((total-left)/total*100))+"%";
+    $("fLeft").textContent="Noch "+minWord(Math.max(1,Math.ceil(left/60)))+" f\u00fcr diesen Schritt.";
+    $("sMin").textContent=Math.max(1,Math.ceil(left/60));
+    var nx=nextOpen(idx);
+    if(nx>=0 && nx!==idx){
+      $("fNextWrap").style.display="";
+      $("fNext").innerHTML='<span class="dot"></span>Schritt '+(nx+1)+' \u00b7 '+esc(STEPS[nx].t);
+      $("fHint").textContent="Du musst heute nicht alles schaffen. Ein Schritt reicht.";
+    }else{
+      $("fNextWrap").style.display="none";
+      $("fHint").textContent="Das ist dein letzter offener Schritt f\u00fcr heute.";
+    }
+    show("s3");
+    stopTimer(); timer=setInterval(tick,1000);
+  }
+
+  function finish(ok){
+    stopTimer();
+    var st=STEPS[idx];
+    var used=Math.max(1,Math.round((total-left)/60));
+    if(ok){done[idx]=true; todayMin+=st.m} else {todayMin+=used}
+    var fertig=0; for(var i=0;i<done.length;i++){if(done[i])fertig++}
+    renderWeek();
+
+    if(ok){
+      $("eKick").textContent="Schritt geschafft";
+      $("eTitle").textContent=cap(minWord(st.m))+" geschafft.";
+      $("eStep").textContent=st.t;
+      $("eP1").innerHTML='<span class="dot"></span>Schritt '+(idx+1)+' von '+STEPS.length+' erledigt';
+      var off=openCount();
+      if(off>0){
+        var nx=nextOpen(idx);
+        $("eP2").innerHTML='<span class="dot"></span>Noch '+stepWord(off)+' offen';
+        $("eWeek").textContent="Heute "+minWord(todayMin)+" gelernt, "+fertig+" von "+STEPS.length+" Schritten erledigt.";
+        $("next").textContent="Schritt "+(nx+1)+" starten \u00b7 "+STEPS[nx].m+" Min";
+        nextAction={mode:"next",to:nx};
+      }else{
+        $("eP2").innerHTML='<span class="dot"></span>Alle Schritte erledigt';
+        $("eWeek").textContent="Heute "+minWord(todayMin)+" gelernt. Kapitel 4 ist durch.";
+        $("next").textContent="F\u00fcr heute fertig";
+        nextAction={mode:"day"};
+      }
+    }else{
+      $("eKick").textContent="Session beendet";
+      $("eTitle").textContent=cap(minWord(used))+" gelernt.";
+      $("eStep").textContent=st.t+" \u2014 noch nicht fertig";
+      $("eP1").innerHTML='<span class="dot"></span>Schritt '+(idx+1)+' von '+STEPS.length+' angefangen';
+      $("eP2").innerHTML='<span class="dot"></span>Du machst weiter, wo du aufgeh\u00f6rt hast';
+      $("eWeek").textContent="Heute "+minWord(todayMin)+" gelernt. Angefangenes z\u00e4hlt auch.";
+      $("next").textContent="Schritt "+(idx+1)+" weitermachen \u00b7 "+Math.max(1,Math.ceil(left/60))+" Min";
+      nextAction={mode:"resume",secs:left};
+    }
+    $("sheet").classList.remove("on");
+    show("s4");
+  }
+
+  var chips=$("mins").querySelectorAll(".chip");
+  Array.prototype.forEach.call(chips,function(c){
+    c.addEventListener("click",function(){
+      Array.prototype.forEach.call(chips,function(o){o.setAttribute("aria-pressed","false")});
+      c.setAttribute("aria-pressed","true");
+      ownMins=parseInt(c.getAttribute("data-m"),10);
+    });
+  });
+
+  $("task").addEventListener("input",function(){task=this.value});
+  $("toOwn").addEventListener("click",function(){show("s2")});
+  $("back1").addEventListener("click",function(){show("s1",true)});
+  $("go1").addEventListener("click",function(){startFocus(true)});
+  $("go2").addEventListener("click",function(){
+    var v=$("own").value.trim();
+    if(!v){$("own").focus();return}
+    STEPS.push({t:v,m:ownMins,custom:true});
+    done.push(false);
+    idx=STEPS.length-1;
+    $("own").value="";
+    renderOpts();
+    show("s1",true);
+  });
+  $("done").addEventListener("click",function(){finish(true)});
+  $("quit").addEventListener("click",function(){$("sheet").classList.add("on")});
+  $("keep").addEventListener("click",function(){$("sheet").classList.remove("on")});
+  $("leave").addEventListener("click",function(){finish(false)});
+  $("next").addEventListener("click",function(){
+    if(!nextAction)return;
+    if(nextAction.mode==="day"){show("s5");return}
+    if(nextAction.mode==="resume"){startFocus(false,nextAction.secs);return}
+    idx=nextAction.to; startFocus(false);
+  });
+  $("stop").addEventListener("click",function(){show("s5")});
+  $("again").addEventListener("click",function(){softReset();show("s1",true)});
+
+  function softReset(){
+    stopTimer(); initState();
+    $("task").value=DEFTASK; $("own").value="";
+    Array.prototype.forEach.call(chips,function(c){c.setAttribute("aria-pressed",c.getAttribute("data-m")==="20"?"true":"false")});
+    $("sheet").classList.remove("on");
+    $("fNextWrap").style.display="";
+    renderOpts(); renderWeek();
+  }
+
+  $("modBtn").addEventListener("click",function(){$("panel").classList.toggle("on")});
+  $("reset").addEventListener("click",function(){
+    softReset();
+    $("mSec").textContent="\u2013"; $("mPath").textContent="\u2013"; $("mStep").textContent="\u2013";
+    $("panel").classList.remove("on");
+    show("s1",true);
+    t0=Date.now();
+  });
+
+  function clock(){
+    var d=new Date();
+    $("sbTime").textContent=d.getHours()+":"+(d.getMinutes()<10?"0":"")+d.getMinutes();
+  }
+
+  initState(); cur="s1"; t0=Date.now();
+  renderOpts(); renderWeek(); clock(); setInterval(clock,20000);
+})();
+</script>
